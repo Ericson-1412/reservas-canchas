@@ -3,8 +3,9 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../lib/generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 enum UserRole {
@@ -64,17 +65,22 @@ model Booking {
   court   Court    @relation(fields: [courtId], references: [id])
   payment Payment?
 
-  @@unique([courtId, bookingDate, startHour])
+  @@unique([courtId, bookingDate, startHour], map: "Booking_active_slot_key", where: raw("\"status\" IN ('PENDING', 'CONFIRMED')"))
 }
 
 model Payment {
-  id              Int           @id @default(autoincrement())
-  bookingId       Int           @unique
-  mercadoPagoId   String?       @unique
-  status          PaymentStatus @default(PENDING)
-  amount          Decimal       @db.Decimal(10, 2)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                    Int           @id @default(autoincrement())
+  bookingId             Int           @unique
+
+  mercadoPagoOrderId    String?       @unique
+  mercadoPagoPaymentId  String?       @unique
+  checkoutUrl           String?
+
+  status                PaymentStatus @default(PENDING)
+  amount                Decimal       @db.Decimal(10, 2)
+
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   booking Booking @relation(fields: [bookingId], references: [id])
 }

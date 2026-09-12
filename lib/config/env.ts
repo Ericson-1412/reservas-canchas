@@ -24,3 +24,18 @@ export const authConfig = {
   accessTokenSecret: getEnvVariable("JWT_ACCESS_SECRET"),
   refreshTokenSecret: getEnvVariable("JWT_REFRESH_SECRET"),
 };
+
+export const mercadoPagoConfig = {
+  accessToken: getEnvVariable(
+    "MERCADO_PAGO_ACCESS_TOKEN"
+  ),
+
+  webhookSecret: getEnvVariable(
+    "MERCADO_PAGO_WEBHOOK_SECRET"
+  ),
+
+  appUrl: getEnvVariable(
+    "APP_URL",
+    "http://localhost:3000"
+  ),
+};

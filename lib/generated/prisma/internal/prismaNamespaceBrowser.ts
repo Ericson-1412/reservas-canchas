@@ -118,7 +118,9 @@ export type BookingScalarFieldEnum = (typeof BookingScalarFieldEnum)[keyof typeo
 export const PaymentScalarFieldEnum = {
   id: 'id',
   bookingId: 'bookingId',
-  mercadoPagoId: 'mercadoPagoId',
+  mercadoPagoOrderId: 'mercadoPagoOrderId',
+  mercadoPagoPaymentId: 'mercadoPagoPaymentId',
+  checkoutUrl: 'checkoutUrl',
   status: 'status',
   amount: 'amount',
   createdAt: 'createdAt',
