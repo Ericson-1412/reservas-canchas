@@ -15,6 +15,22 @@ interface MercadoPagoOrderResponse {
     checkout_url: string;
 }
 
+export interface MercadoPagoOrder {
+  id: string;
+  status: string;
+  status_detail: string;
+  external_reference?: string;
+  total_amount?: string;
+
+  transactions?: {
+    payments?: Array<{
+      id: string;
+      status: string;
+      status_detail: string;
+    }>;
+  };
+}
+
 export async function createMercadoPagoOrder(
     input: CreateOrderInput
 ): Promise<MercadoPagoOrderResponse> {
@@ -82,4 +98,33 @@ export async function createMercadoPagoOrder(
     }
 
     return response.json();
+}
+
+export async function getMercadoPagoOrder(
+  orderId: string
+): Promise<MercadoPagoOrder> {
+  const response = await fetch(
+    `https://api.mercadopago.com/v1/orders/${orderId}`,
+    {
+      method: "GET",
+
+      headers: {
+        Authorization:
+          `Bearer ${mercadoPagoConfig.accessToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+
+    console.error(
+      "Error consultando orden Mercado Pago:",
+      error
+    );
+
+    throw new Error("MERCADO_PAGO_ORDER_ERROR");
+  }
+
+  return response.json();
 }

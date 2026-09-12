@@ -5,7 +5,7 @@ import {
 
 import { bookingRepository } from "@/modules/bookings/booking.repository";
 
-import { createMercadoPagoOrder } from "@/modules/payments/payment.gateway";
+import { createMercadoPagoOrder, getMercadoPagoOrder } from "@/modules/payments/payment.gateway";
 
 import { paymentRepository } from "@/modules/payments/payment.repository";
 
@@ -46,14 +46,14 @@ export const paymentService = {
 
     if (
       existingPayment?.status ===
-        PaymentStatus.APPROVED
+      PaymentStatus.APPROVED
     ) {
       throw new Error("BOOKING_ALREADY_PAID");
     }
 
     if (
       existingPayment?.status ===
-        PaymentStatus.PENDING &&
+      PaymentStatus.PENDING &&
       existingPayment.checkoutUrl
     ) {
       return {
@@ -87,6 +87,101 @@ export const paymentService = {
     return {
       checkoutUrl:
         order.checkout_url,
+    };
+  },
+
+  async processOrderNotification(
+    orderId: string
+  ): Promise<void> {
+    const order =
+      await getMercadoPagoOrder(orderId);
+
+    const payment =
+      await paymentRepository.findByMercadoPagoOrderId(
+        order.id
+      );
+
+    if (!payment) {
+      throw new Error("PAYMENT_NOT_FOUND");
+    }
+
+    if (
+      payment.status === PaymentStatus.APPROVED
+    ) {
+      return;
+    }
+
+    if (
+      order.external_reference !==
+      `booking-${payment.bookingId}`
+    ) {
+      throw new Error("INVALID_ORDER_REFERENCE");
+    }
+
+    if (
+      Number(order.total_amount) !==
+      Number(payment.amount)
+    ) {
+      throw new Error("INVALID_ORDER_AMOUNT");
+    }
+
+    const paymentTransaction =
+      order.transactions?.payments?.[0];
+
+    const approved =
+      order.status === "processed" &&
+      order.status_detail === "accredited";
+
+    if (!approved) {
+      return;
+    }
+
+    await paymentRepository.approvePayment(
+      payment.id,
+      payment.bookingId,
+      paymentTransaction?.id
+    );
+  },
+
+  async syncPayment(
+    userId: number,
+    bookingId: number
+  ) {
+    const booking =
+      await bookingRepository.findForPayment(
+        bookingId,
+        userId
+      );
+
+    if (!booking) {
+      throw new Error("BOOKING_NOT_FOUND");
+    }
+
+    const payment =
+      await paymentRepository.findByBookingId(
+        bookingId
+      );
+
+    if (!payment) {
+      throw new Error("PAYMENT_NOT_FOUND");
+    }
+
+    if (!payment.mercadoPagoOrderId) {
+      throw new Error("ORDER_NOT_FOUND");
+    }
+
+    await paymentService.processOrderNotification(
+      payment.mercadoPagoOrderId
+    );
+
+    const updatedPayment =
+      await paymentRepository.findByBookingId(
+        bookingId
+      );
+
+    return {
+      bookingId,
+      paymentStatus: updatedPayment?.status,
     };
   },
 };

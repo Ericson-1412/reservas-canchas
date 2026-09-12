@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PaymentSuccessSync } from "@/modules/payments/components/payment-success-sync";
+
 export default function PaymentSuccessPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
@@ -9,9 +11,11 @@ export default function PaymentSuccessPage() {
         </h1>
 
         <p className="mt-3 text-slate-400">
-          Mercado Pago procesó tu operación.
-          Estamos validando la confirmación del pago.
+          Estamos verificando tu pago
+          directamente con Mercado Pago.
         </p>
+
+        <PaymentSuccessSync />
 
         <Link
           href="/mis-reservas"
