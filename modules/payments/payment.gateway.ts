@@ -16,19 +16,19 @@ interface MercadoPagoOrderResponse {
 }
 
 export interface MercadoPagoOrder {
-  id: string;
-  status: string;
-  status_detail: string;
-  external_reference?: string;
-  total_amount?: string;
+    id: string;
+    status: string;
+    status_detail: string;
+    external_reference?: string;
+    total_amount?: string;
 
-  transactions?: {
-    payments?: Array<{
-      id: string;
-      status: string;
-      status_detail: string;
-    }>;
-  };
+    transactions?: {
+        payments?: Array<{
+            id: string;
+            status: string;
+            status_detail: string;
+        }>;
+    };
 }
 
 export async function createMercadoPagoOrder(
@@ -57,7 +57,10 @@ export async function createMercadoPagoOrder(
                     `booking-${input.bookingId}`,
 
                 payer: {
-                    email: input.email,
+                    email:
+                        process.env.NODE_ENV === "production"
+                            ? input.email
+                            : mercadoPagoConfig.testPayerEmail,
                 },
 
                 items: [
@@ -101,30 +104,30 @@ export async function createMercadoPagoOrder(
 }
 
 export async function getMercadoPagoOrder(
-  orderId: string
+    orderId: string
 ): Promise<MercadoPagoOrder> {
-  const response = await fetch(
-    `https://api.mercadopago.com/v1/orders/${orderId}`,
-    {
-      method: "GET",
+    const response = await fetch(
+        `https://api.mercadopago.com/v1/orders/${orderId}`,
+        {
+            method: "GET",
 
-      headers: {
-        Authorization:
-          `Bearer ${mercadoPagoConfig.accessToken}`,
-      },
-    }
-  );
-
-  if (!response.ok) {
-    const error = await response.text();
-
-    console.error(
-      "Error consultando orden Mercado Pago:",
-      error
+            headers: {
+                Authorization:
+                    `Bearer ${mercadoPagoConfig.accessToken}`,
+            },
+        }
     );
 
-    throw new Error("MERCADO_PAGO_ORDER_ERROR");
-  }
+    if (!response.ok) {
+        const error = await response.text();
 
-  return response.json();
+        console.error(
+            "Error consultando orden Mercado Pago:",
+            error
+        );
+
+        throw new Error("MERCADO_PAGO_ORDER_ERROR");
+    }
+
+    return response.json();
 }

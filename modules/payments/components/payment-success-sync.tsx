@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
-export function PaymentSuccessSync() {
+interface PaymentSuccessSyncProps {
+  externalReference: string | null;
+}
+
+export function PaymentSuccessSync({
+  externalReference,
+}: PaymentSuccessSyncProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [message, setMessage] =
     useState("Verificando pago...");
@@ -15,11 +20,6 @@ export function PaymentSuccessSync() {
 
   useEffect(() => {
     async function syncPayment() {
-      const externalReference =
-        searchParams.get(
-          "external_reference"
-        );
-
       if (!externalReference) {
         setError(true);
         setMessage(
@@ -41,8 +41,7 @@ export function PaymentSuccessSync() {
         return;
       }
 
-      const bookingId =
-        Number(match[1]);
+      const bookingId = Number(match[1]);
 
       try {
         const response = await fetch(
@@ -51,8 +50,7 @@ export function PaymentSuccessSync() {
             method: "POST",
 
             headers: {
-              "Content-Type":
-                "application/json",
+              "Content-Type": "application/json",
             },
 
             body: JSON.stringify({
@@ -61,14 +59,14 @@ export function PaymentSuccessSync() {
           }
         );
 
-        const data =
-          await response.json();
+        const data = await response.json();
 
         if (!response.ok) {
           setError(true);
+
           setMessage(
             data.message ??
-              "No se pudo verificar el pago."
+            "No se pudo verificar el pago."
           );
 
           return;
@@ -89,17 +87,18 @@ export function PaymentSuccessSync() {
     }
 
     syncPayment();
-  }, [router, searchParams]);
+  }, [externalReference, router]);
 
   return (
-    <p
-      className={`mt-4 text-sm ${
-        error
-          ? "text-red-400"
-          : "text-green-400"
-      }`}
+    <div
+      className={`mt-6 rounded-xl border px-4 py-3 text-sm font-medium ${error
+          ? "border-red-200 bg-red-50 text-red-700"
+          : message === "Pago confirmado correctamente."
+            ? "border-green-200 bg-green-50 text-green-700"
+            : "border-blue-200 bg-blue-50 text-blue-700"
+        }`}
     >
       {message}
-    </p>
+    </div>
   );
 }

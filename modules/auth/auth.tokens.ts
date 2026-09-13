@@ -80,3 +80,29 @@ export async function verifyAccessToken(
     return null;
   }
 }
+
+export async function verifyRefreshToken(
+  token: string
+): Promise<number | null> {
+  try {
+    const { payload } = await jwtVerify(
+      token,
+      refreshSecret,
+      {
+        issuer: AUTH_ISSUER,
+        audience: AUTH_AUDIENCE,
+        algorithms: ["HS256"],
+      }
+    );
+
+    const userId = Number(payload.sub);
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return null;
+    }
+
+    return userId;
+  } catch {
+    return null;
+  }
+}

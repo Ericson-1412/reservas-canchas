@@ -1,4 +1,4 @@
-import type { BookingStatus } from "@/lib/generated/prisma/enums";
+import type { BookingStatus, PaymentStatus } from "@/lib/generated/prisma/enums";
 
 export interface AvailabilitySlot {
   startHour: number;
@@ -33,6 +33,11 @@ export interface UserBookingItem {
     name: string;
     sport: string;
   };
+
+  payment: {
+    status: PaymentStatus;
+    mercadoPagoPaymentId: string | null;
+  } | null;
 }
 
 export interface AdminBookingItem {
@@ -53,4 +58,9 @@ export interface AdminBookingItem {
     name: string;
     sport: string;
   };
+
+  payment: {
+    status: PaymentStatus;
+    mercadoPagoPaymentId: string | null;
+  } | null;
 }

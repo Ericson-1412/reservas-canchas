@@ -52,8 +52,7 @@ export async function POST(request: Request) {
       ) {
         return NextResponse.json(
           {
-            message:
-              "La reserva no existe.",
+            message: "La reserva no existe.",
           },
           {
             status: 404,
@@ -66,8 +65,7 @@ export async function POST(request: Request) {
       ) {
         return NextResponse.json(
           {
-            message:
-              "La reserva está cancelada.",
+            message: "La reserva está cancelada.",
           },
           {
             status: 409,
@@ -76,13 +74,25 @@ export async function POST(request: Request) {
       }
 
       if (
-        error.message ===
-        "BOOKING_ALREADY_PAID"
+        error.message === "BOOKING_EXPIRED"
       ) {
         return NextResponse.json(
           {
             message:
-              "La reserva ya fue pagada.",
+              "El tiempo para pagar esta reserva ha vencido.",
+          },
+          {
+            status: 409,
+          }
+        );
+      }
+
+      if (
+        error.message === "BOOKING_ALREADY_PAID"
+      ) {
+        return NextResponse.json(
+          {
+            message: "La reserva ya fue pagada.",
           },
           {
             status: 409,
@@ -95,8 +105,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        message:
-          "No se pudo iniciar el pago.",
+        message: "No se pudo iniciar el pago.",
       },
       {
         status: 500,

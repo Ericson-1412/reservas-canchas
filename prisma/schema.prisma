@@ -58,6 +58,7 @@ model Booking {
   startHour   Int
   status      BookingStatus @default(PENDING)
   totalPrice  Decimal       @db.Decimal(10, 2)
+  expiresAt   DateTime?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 

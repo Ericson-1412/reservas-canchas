@@ -61,9 +61,9 @@ export function PayBookingButton({
         type="button"
         onClick={handlePayment}
         disabled={loading}
-        className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-950 disabled:opacity-50"
+        className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? "Redirigiendo..." : "Pagar"}
+        {loading ? "Redirigiendo..." : "Pagar reserva"}
       </button>
 
       {error && (

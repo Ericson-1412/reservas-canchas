@@ -54,6 +54,30 @@ export async function POST(request: Request) {
         );
       }
 
+      // NUEVO
+      if (error.message === "PAST_DATE") {
+        return NextResponse.json(
+          {
+            message: "No puedes reservar una fecha pasada.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      // NUEVO
+      if (error.message === "PAST_SLOT") {
+        return NextResponse.json(
+          {
+            message: "Ese horario ya pasó y no puede reservarse.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
       if (error.message === "INVALID_HOUR") {
         return NextResponse.json(
           { message: "Horario inválido." },
@@ -63,15 +87,20 @@ export async function POST(request: Request) {
 
       if (error.message === "COURT_NOT_FOUND") {
         return NextResponse.json(
-          { message: "La cancha no existe o está inactiva." },
-          { status: 404 }
+          {
+            message: "La cancha no existe o está inactiva.",
+          },
+          {
+            status: 404,
+          }
         );
       }
 
       if (error.message === "SLOT_NOT_AVAILABLE") {
         return NextResponse.json(
           {
-            message: "El horario seleccionado ya no está disponible.",
+            message:
+              "El horario seleccionado ya no está disponible.",
           },
           {
             status: 409,

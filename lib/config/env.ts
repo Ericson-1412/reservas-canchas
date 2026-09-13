@@ -38,4 +38,9 @@ export const mercadoPagoConfig = {
     "APP_URL",
     "http://localhost:3000"
   ),
+
+  testPayerEmail: getEnvVariable(
+    "MERCADO_PAGO_TEST_PAYER_EMAIL",
+    "test@testuser.com"
+  ),
 };

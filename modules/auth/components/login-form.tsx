@@ -13,7 +13,13 @@ interface LoginResponse {
   message?: string;
 }
 
-export function LoginForm() {
+interface LoginFormProps {
+  returnTo?: string;
+}
+
+export function LoginForm({
+  returnTo,
+}: LoginFormProps) {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -21,7 +27,9 @@ export function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     setError("");
@@ -42,11 +50,15 @@ export function LoginForm() {
       const data: LoginResponse = await response.json();
 
       if (!response.ok || !data.user) {
-        setError(data.message ?? "No se pudo iniciar sesión.");
+        setError(
+          data.message ?? "No se pudo iniciar sesión."
+        );
         return;
       }
 
-      if (data.user.role === "ADMIN") {
+      if (returnTo) {
+        router.replace(returnTo);
+      } else if (data.user.role === "ADMIN") {
         router.replace("/backoffice");
       } else {
         router.replace("/canchas");
@@ -54,7 +66,9 @@ export function LoginForm() {
 
       router.refresh();
     } catch {
-      setError("No se pudo conectar con el servidor.");
+      setError(
+        "No se pudo conectar con el servidor."
+      );
     } finally {
       setLoading(false);
     }
@@ -63,20 +77,12 @@ export function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-8"
+      className="w-full"
     >
-      <h1 className="text-2xl font-bold text-white">
-        Iniciar sesión
-      </h1>
-
-      <p className="mt-2 text-sm text-slate-400">
-        Ingresa tus credenciales para continuar.
-      </p>
-
-      <div className="mt-6">
+      <div>
         <label
           htmlFor="email"
-          className="text-sm text-slate-300"
+          className="text-sm font-medium text-slate-700"
         >
           Correo electrónico
         </label>
@@ -85,16 +91,19 @@ export function LoginForm() {
           id="email"
           type="email"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) =>
+            setEmail(event.target.value)
+          }
           required
-          className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-white"
+          placeholder="correo@ejemplo.com"
+          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
         />
       </div>
 
-      <div className="mt-4">
+      <div className="mt-5">
         <label
           htmlFor="password"
-          className="text-sm text-slate-300"
+          className="text-sm font-medium text-slate-700"
         >
           Contraseña
         </label>
@@ -103,14 +112,17 @@ export function LoginForm() {
           id="password"
           type="password"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(event) =>
+            setPassword(event.target.value)
+          }
           required
-          className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-white"
+          placeholder="Ingresa tu contraseña"
+          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
         />
       </div>
 
       {error && (
-        <p className="mt-4 text-sm text-red-400">
+        <p className="mt-4 text-sm text-red-600">
           {error}
         </p>
       )}
@@ -118,9 +130,11 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="mt-6 w-full rounded-lg bg-white px-4 py-3 font-medium text-slate-950 disabled:opacity-50"
+        className="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? "Ingresando..." : "Ingresar"}
+        {loading
+          ? "Ingresando..."
+          : "Iniciar sesión"}
       </button>
     </form>
   );

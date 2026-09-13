@@ -31,4 +31,25 @@ export const authRepository = {
             },
         });
     },
+
+    async createUser(data: {
+        name: string;
+        email: string;
+        passwordHash: string;
+    }) {
+        return prisma.user.create({
+            data: {
+                name: data.name,
+                email: data.email,
+                passwordHash: data.passwordHash,
+            },
+
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+            },
+        });
+    },
 };

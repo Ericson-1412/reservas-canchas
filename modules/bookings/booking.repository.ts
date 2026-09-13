@@ -35,6 +35,7 @@ export const bookingRepository = {
       bookingDate: Date;
       startHour: number;
       totalPrice: Prisma.Decimal;
+      expiresAt: Date;
     }
   ) {
     return tx.booking.create({
@@ -45,6 +46,7 @@ export const bookingRepository = {
         startHour: data.startHour,
         totalPrice: data.totalPrice,
         status: BookingStatus.PENDING,
+        expiresAt: data.expiresAt,
       },
     });
   },
@@ -67,6 +69,13 @@ export const bookingRepository = {
             id: true,
             name: true,
             sport: true,
+          },
+        },
+
+        payment: {
+          select: {
+            status: true,
+            mercadoPagoPaymentId: true,
           },
         },
       },
@@ -105,6 +114,13 @@ export const bookingRepository = {
             id: true,
             name: true,
             sport: true,
+          },
+        },
+
+        payment: {
+          select: {
+            status: true,
+            mercadoPagoPaymentId: true,
           },
         },
       },
@@ -170,6 +186,7 @@ export const bookingRepository = {
         id: true,
         status: true,
         totalPrice: true,
+        expiresAt: true,
 
         user: {
           select: {
@@ -182,6 +199,22 @@ export const bookingRepository = {
             name: true,
           },
         },
+      },
+    });
+  },
+
+  async cancelExpiredPendingBookings() {
+    return prisma.booking.updateMany({
+      where: {
+        status: BookingStatus.PENDING,
+
+        expiresAt: {
+          lte: new Date(),
+        },
+      },
+
+      data: {
+        status: BookingStatus.CANCELED,
       },
     });
   },

@@ -34,6 +34,19 @@ export const paymentService = {
     }
 
     if (
+      booking.status === BookingStatus.PENDING &&
+      booking.expiresAt &&
+      booking.expiresAt <= new Date()
+    ) {
+      await bookingRepository.updateStatus(
+        booking.id,
+        BookingStatus.CANCELED
+      );
+
+      throw new Error("BOOKING_EXPIRED");
+    }
+
+    if (
       booking.status === BookingStatus.CONFIRMED
     ) {
       throw new Error("BOOKING_ALREADY_PAID");

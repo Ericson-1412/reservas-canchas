@@ -17,13 +17,52 @@ import type {
 
 const OPENING_HOUR = 10;
 const CLOSING_HOUR = 22;
+const BOOKING_PAYMENT_LIMIT_MINUTES = 15;
+
+const TIME_ZONE = "America/Lima";
+
+function getCurrentDateTime() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+
+  const getPart = (type: string) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  return {
+    date: `${getPart("year")}-${getPart("month")}-${getPart("day")}`,
+    hour: Number(getPart("hour")),
+    minute: Number(getPart("minute")),
+  };
+}
 
 export const bookingService = {
   async getAvailability(
     courtId: number,
     date: string
   ): Promise<AvailabilitySlot[]> {
-    const bookingDate = new Date(`${date}T00:00:00.000Z`);
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      throw new Error("INVALID_DATE");
+    }
+
+    await bookingRepository.cancelExpiredPendingBookings();
+
+    const now = getCurrentDateTime();
+
+    if (date < now.date) {
+      throw new Error("PAST_DATE");
+    }
+
+    const bookingDate = new Date(
+      `${date}T00:00:00.000Z`
+    );
 
     const occupiedBookings =
       await bookingRepository.findOccupiedHours(
@@ -44,10 +83,17 @@ export const bookingService = {
       hour < CLOSING_HOUR;
       hour++
     ) {
+      const alreadyPassed =
+        date === now.date &&
+        hour <= now.hour;
+
       slots.push({
         startHour: hour,
         endHour: hour + 1,
-        available: !occupiedHours.has(hour),
+
+        available:
+          !alreadyPassed &&
+          !occupiedHours.has(hour),
       });
     }
 
@@ -87,6 +133,27 @@ export const bookingService = {
       throw new Error("INVALID_DATE");
     }
 
+    const now = getCurrentDateTime();
+
+    if (input.bookingDate < now.date) {
+      throw new Error("PAST_DATE");
+    }
+
+    if (
+      input.bookingDate === now.date &&
+      input.startHour <= now.hour
+    ) {
+      throw new Error("PAST_SLOT");
+    }
+
+    await bookingRepository.cancelExpiredPendingBookings();
+
+    // La reserva tendrá 15 minutos para ser pagada.
+    const expiresAt = new Date(
+      Date.now() +
+      BOOKING_PAYMENT_LIMIT_MINUTES * 60 * 1000
+    );
+
     try {
       const booking = await prisma.$transaction(
         async (tx) => {
@@ -100,20 +167,21 @@ export const bookingService = {
             throw new Error("COURT_NOT_FOUND");
           }
 
-          const existingBooking = await tx.booking.findFirst({
-            where: {
-              courtId: input.courtId,
-              bookingDate,
-              startHour: input.startHour,
+          const existingBooking =
+            await tx.booking.findFirst({
+              where: {
+                courtId: input.courtId,
+                bookingDate,
+                startHour: input.startHour,
 
-              status: {
-                in: [
-                  BookingStatus.PENDING,
-                  BookingStatus.CONFIRMED,
-                ],
+                status: {
+                  in: [
+                    BookingStatus.PENDING,
+                    BookingStatus.CONFIRMED,
+                  ],
+                },
               },
-            },
-          });
+            });
 
           if (existingBooking) {
             throw new Error("SLOT_NOT_AVAILABLE");
@@ -125,6 +193,9 @@ export const bookingService = {
             bookingDate,
             startHour: input.startHour,
             totalPrice: court.pricePerHour,
+
+            // NUEVO
+            expiresAt,
           });
         },
         {
@@ -172,6 +243,8 @@ export const bookingService = {
       totalPrice: Number(booking.totalPrice),
 
       court: booking.court,
+
+      payment: booking.payment,
     }));
   },
   async listAllBookings(): Promise<AdminBookingItem[]> {
@@ -193,6 +266,8 @@ export const bookingService = {
       user: booking.user,
 
       court: booking.court,
+
+      payment: booking.payment,
     }));
   },
   async updateStatus(
