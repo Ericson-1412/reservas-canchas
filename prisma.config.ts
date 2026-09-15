@@ -1,9 +1,21 @@
 import { config as loadEnv } from "dotenv";
 import { defineConfig } from "prisma/config";
 
-import { buildDatabaseUrl } from "./lib/config/build-database-url";
+if (process.env.NODE_ENV !== "production") {
+  loadEnv({
+    path: ".env.local",
+  });
+}
 
-loadEnv({ path: ".env.local" });
+const databaseUrl =
+  process.env.DATABASE_URL_UNPOOLED ??
+  process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error(
+    "DATABASE_URL is required for Prisma."
+  );
+}
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -13,12 +25,6 @@ export default defineConfig({
   },
 
   datasource: {
-    url: buildDatabaseUrl({
-      host: process.env.DB_HOST ?? "localhost",
-      port: Number(process.env.DB_PORT ?? "5432"),
-      user: process.env.DB_USER ?? "postgres",
-      password: process.env.DB_PASSWORD ?? "",
-      database: process.env.DB_NAME ?? "",
-    }),
+    url: databaseUrl,
   },
 });

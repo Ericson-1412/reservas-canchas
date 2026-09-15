@@ -59,11 +59,6 @@ export async function PATCH(
           status: 400,
         }
       );
-    } {
-      return NextResponse.json(
-        { message: "Estado inválido." },
-        { status: 400 }
-      );
     }
 
     const booking =
@@ -73,7 +68,7 @@ export async function PATCH(
       );
 
     return NextResponse.json({
-      message: "Estado actualizado correctamente.",
+      message: "Reserva cancelada correctamente.",
       booking,
     });
   } catch (error) {
@@ -88,7 +83,18 @@ export async function PATCH(
       if (error.message === "BOOKING_ALREADY_CANCELED") {
         return NextResponse.json(
           {
-            message: "La reserva ya se encuentra cancelada.",
+            message:
+              "La reserva ya se encuentra cancelada.",
+          },
+          { status: 409 }
+        );
+      }
+
+      if (error.message === "BOOKING_ALREADY_CONFIRMED") {
+        return NextResponse.json(
+          {
+            message:
+              "Una reserva confirmada no puede cancelarse.",
           },
           { status: 409 }
         );
